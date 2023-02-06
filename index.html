@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="/styles/styles.css" rel="stylesheet">
+    <title>Note It</title>
+</head>
+<body>
+  <header>
+    <h1>Note It</h1>
+  </header>
+  <main>
+    <button autofocus id="new-note">Jot a New Note</button>
+    <notes-list></notes-list>
+  </main>
+  <footer>
+  </footer>
+
+  <script type="module">
+      import ApplicationRunner from "./index.js";
+
+      async function load() {
+          document.runner = new ApplicationRunner();
+      }
+
+      load();
+  </script>
+</body>
+</html>

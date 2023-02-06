@@ -1,0 +1,17 @@
+:root {
+    --border-color: #ccc;
+    --border: 1px solid var(--border-color);
+    --padding: 0.5rem;
+}
+
+header {
+    display: flex;
+    justify-content: center;
+}
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}

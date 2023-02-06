@@ -1,0 +1,36 @@
+<style>
+    :host {
+        display: flex;
+        flex-direction: column;
+        border: var(--border);
+    }
+    input {
+        border: none;
+        border-bottom: var(--border);
+        padding: var(--padding);
+    }
+    textarea {
+        border: none;
+        border-bottom: var(--border);
+        padding: var(--padding);
+    }
+    .note-footer {
+        display: flex;
+        justify-content: flex-end;
+        padding: var(--padding);
+    }
+    .note-footer button {
+        margin-left: var(--padding);
+    }
+
+    :host([state='create']) #delete {
+        display: none;
+    }
+</style>
+<input id="title" type="text" placeholder="Title">
+<textarea id="note" placeholder="Jot a new note..." rows="5"></textarea>
+<div class="note-footer">
+    <button id="save">Save</button>
+    <button id="close">Close</button>
+    <button id="delete">Delete</button>
+</div>
