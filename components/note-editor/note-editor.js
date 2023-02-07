@@ -7,11 +7,11 @@ class NoteEditor extends HTMLElement {
     #titleInput;
     #noteInput;
     #clickHandler = this.#click.bind(this);
-    #actions = {
+    #actions = Object.freeze({
         "save": this.#save.bind(this),
         "close": this.#close.bind(this),
         "delete": this.#delete.bind(this)
-    }
+    });
 
     get html() {
         return import.meta.url.replace(".js", ".html");
@@ -65,8 +65,9 @@ class NoteEditor extends HTMLElement {
             title = "Untitled Note";
         }
 
+        //Might need to switch out logic here. If this.#id is defined, call update, otherwise call add;
         const id = this.#id || Date.now();
-        window.dispatchEvent(new CustomEvent("dbAction", {detail: {action: "saveNote", params: {id: id, title, note}}}));
+        window.dispatchEvent(new CustomEvent("dbAction", {detail: {action: "add", params: {id: id, title, note}}}));
     }
 
     async #close(event) {
@@ -76,7 +77,7 @@ class NoteEditor extends HTMLElement {
 
     async #delete(event) {
         console.log("NoteEditor delete");
-        window.dispatchEvent(new CustomEvent("dbAction", {detail: {action: "deleteName", params: {id: this.#id}}}));
+        window.dispatchEvent(new CustomEvent("dbAction", {detail: {action: "delete", params: {id: this.#id}}}));
         this.remove();
     }
 }

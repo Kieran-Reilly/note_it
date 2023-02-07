@@ -1,67 +1,113 @@
 class DbWorker {
+    #db;
+
+    /**
+     * Opens the connection to the indexedDB
+     * @param message
+     * @returns {Promise<void>}
+     */
     async #openDB(message) {
         const name = message.data.name;
         const version = message.data.version;
-        const action = message.data.action;
+        const store = message.data.store;
 
-        const request = indexedDB.open(name, version);
-        request.onerror = (event) => {
-            const error = `Error opening the database: '${name}'`
-            console.error(error);
-            this[action] != null && this[action]({isValid: false, error: error, data: message.data});
-        }
-        request.onsuccess = (event) => {
-            this[action] != null && this[action]({isValid: true, event: event, data: message.data});
-        }
-        request.onupgradeneeded = (event) => {
-            let db = event.target.result;
-            db.createObjectStore("notes", {keyPath: "id", autoIncrement: true});
-            db = null;
-        }
+        this.#db = await new Promise((resolve, reject) => {
+            const request = indexedDB.open(name, version);
+            request.onsuccess = (event) => {
+                resolve(event.target.result);
+            }
+            request.onerror = (event) => {
+                console.error(`Error opening connection to database: '${name}'`, event);
+                reject(event);
+            }
+            request.onupgradeneeded = (event) => {
+                let db = event.target.result;
+                db.createObjectStore(store, {keyPath: "id", autoIncrement: true});
+                db = null;
+            }
+        });
+    }
+
+    /**
+     * Executes a transaction on the indexedDB
+     * @param callback
+     * @returns {Promise<unknown>}
+     */
+    async #transact(callback) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = this.#db.transaction(["notes"], "readwrite");
+            const objectStore = transaction.objectStore("notes");
+
+            const request = await callback(objectStore);
+
+            request.onsuccess = (event) => {
+                resolve(event);
+            }
+            request.onerror = (event) => {
+                reject(event);
+            }
+        });
     }
 
     async initDb(params) {
         postMessage({isValid: params.isValid});
     }
 
-    async deleteNote(params) {
+    /**
+     * Add operation on the indexedDb
+     * @param params
+     * @returns {Promise<void>}
+     */
+    async add(params) {
+        await this.#transact(async (objectStore) => {
+            return await objectStore.add({id: params.id, title: params.title, note: params.note});
+        }).then((event) => {
+            postMessage({operation: 'save', id: params.id});
+        }).catch((event) => {
+            console.error("Error executing add operation", event);
+        });
+    }
+
+    /**
+     * Delete operation on the indexedDB
+     * @param params
+     * @returns {Promise<void>}
+     */
+    async delete(params) {
 
     }
 
-    async fetchNotes(params) {
+    /**
+     * Fetch operation on the indexedDB
+     * @param params
+     * @returns {Promise<void>}
+     */
+    async get(params) {
 
     }
 
-    async fetchNote(params) {
+    /**
+     * Update operation on the indexedDB
+     * @param params
+     * @returns {Promise<void>}
+     */
+    async put(params) {
 
     }
 
-    async saveNote(params) {
-        console.log("attempting to save note to db", params);
-        if (params.isValid) {
-            const db = params.event.target.result;
-            const transaction = db.transaction(["notes"], "readwrite");
-            const objectStore = transaction.objectStore("notes");
-            const request = objectStore.add({id: params.data.id, title: params.data.title, note: params.data.note});
-
-            request.onsuccess = function(event) {
-                console.log("Data added successfully");
-                //TODO KR: post message to main thread to update UI
-            };
-
-            request.onerror = function(event) {
-                console.error("Error adding data", event);
-            };
-        }
-    }
-
+    /**
+     * Default work operation, simply initializes the db
+     * @param params
+     * @returns {Promise<void>}
+     */
     async default(params) {
-        this.initDb(params);
+        // await this.#openDB({data: params});
     }
 
     async onMessage(message) {
         if (message.data.action != null && this[message.data.action] !== null) {
             await this.#openDB(message);
+            await this[message.data.action](message.data);
         } else {
             await this.default(message.data);
         }

@@ -36,6 +36,7 @@ export default class ApplicationRunner {
 
     async #initDbManager() {
         this.#dbManager = new DbManager();
+        window.dispatchEvent(new CustomEvent('dbAction', {detail: {action:  "initDb"}}));
     }
 
     async #newNote(event) {
