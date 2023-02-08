@@ -23,14 +23,14 @@
         margin-left: var(--padding);
     }
 
-    :host([state='create']) #delete {
+    :host([state='create']) #deleteBtn {
         display: none;
     }
 </style>
 <input id="title" type="text" placeholder="Title">
 <textarea id="note" placeholder="Jot a new note..." rows="5"></textarea>
 <div class="note-footer">
-    <button id="save">Save</button>
-    <button id="close">Close</button>
-    <button id="delete">Delete</button>
+    <button id="saveBtn" data-action="save">Save</button>
+    <button id="closeBtn" data-action="close">Close</button>
+    <button id="deleteBtn" data-action="delete">Delete</button>
 </div>

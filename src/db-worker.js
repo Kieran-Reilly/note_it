@@ -49,22 +49,14 @@ class DbWorker {
         });
     }
 
-    async initDb(params) {
-        postMessage({isValid: params.isValid});
-    }
-
     /**
      * Add operation on the indexedDb
      * @param params
      * @returns {Promise<void>}
      */
     async add(params) {
-        await this.#transact(async (objectStore) => {
+        return await this.#transact(async (objectStore) => {
             return await objectStore.add({id: params.id, title: params.title, note: params.note});
-        }).then((event) => {
-            postMessage({operation: 'save', id: params.id});
-        }).catch((event) => {
-            console.error("Error executing add operation", event);
         });
     }
 
@@ -83,7 +75,30 @@ class DbWorker {
      * @returns {Promise<void>}
      */
     async get(params) {
+        return await this.#transact(async (objectStore) => {
+            return await objectStore.get(params.id);
+        });
+    }
 
+    /**
+     * Fetch all operation on the indexedDB
+     * @param params
+     * @returns {Promise<void>}
+     */
+    async getAll(params) {
+        if (params.ids != null) {
+            const notes = [];
+            const transactionResult = await this.#transact(async (objectStore) => {
+                return await objectStore.openCursor();
+            });
+            console.log("transactionResult", transactionResult);
+
+            const cursor = transactionResult.target.result;
+            if (cursor) {
+                notes.push(cursor.value);
+                cursor.continue();
+            }
+        }
     }
 
     /**
@@ -95,21 +110,13 @@ class DbWorker {
 
     }
 
-    /**
-     * Default work operation, simply initializes the db
-     * @param params
-     * @returns {Promise<void>}
-     */
-    async default(params) {
-        // await this.#openDB({data: params});
-    }
-
     async onMessage(message) {
-        if (message.data.action != null && this[message.data.action] !== null) {
-            await this.#openDB(message);
-            await this[message.data.action](message.data);
-        } else {
-            await this.default(message.data);
+        await this.#openDB(message);
+
+        if (message.data.action != null && this[message.data.action] != null) {
+            const transactionResult = await this[message.data.action](message.data);
+            this.#db = null;
+            postMessage({operation: message.data.action, result: transactionResult.target.result});
         }
     }
 }
