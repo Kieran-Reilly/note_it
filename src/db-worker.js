@@ -86,18 +86,16 @@ class DbWorker {
      * @returns {Promise<void>}
      */
     async getAll(params) {
-        if (params.ids != null) {
-            const notes = [];
-            const transactionResult = await this.#transact(async (objectStore) => {
-                return await objectStore.openCursor();
-            });
-            console.log("transactionResult", transactionResult);
+        const notes = [];
+        const transactionResult = await this.#transact(async (objectStore) => {
+            return objectStore.openCursor();
+        });
+        console.log("transactionResult", transactionResult);
 
-            const cursor = transactionResult.target.result;
-            if (cursor) {
-                notes.push(cursor.value);
-                cursor.continue();
-            }
+        const cursor = transactionResult.target.result;
+        if (cursor) {
+            notes.push(cursor.value);
+            cursor.continue();
         }
     }
 

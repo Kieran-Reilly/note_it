@@ -48,9 +48,8 @@ class NoteEditor extends HTMLElement {
     }
 
     async #click(event) {
-        console.log(event.target);
-        const id = event.target.id;
-        this.#actions[id]?.(event);
+        const action = event.target.dataset.action;
+        this.#actions[action]?.(event);
     }
 
     async #save() {

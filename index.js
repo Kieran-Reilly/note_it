@@ -12,9 +12,13 @@ import {DbManager} from "./src/db-manager.js";
  *
  */
 export default class ApplicationRunner {
-    #newNoteHandler;
-    #newNoteButton;
     #dbManager;
+
+    #newNoteButton;
+    #newNoteHandler = this.#newNote.bind(this);
+
+    #notesList;
+    #notesListReadyHandler = this.#notesListReady.bind(this);
 
     constructor() {
         this.#init();
@@ -25,13 +29,15 @@ export default class ApplicationRunner {
         this.#newNoteButton.removeEventListener('click', this.#newNoteHandler);
         this.#newNoteHandler = null;
         this.#newNoteButton = null;
+        this.#notesList.removeEventListener('ready', this.#notesListReadyHandler);
+        this.#notesListReadyHandler = null;
+        this.#notesList = null;
     }
 
     async #init() {
         await this.#initDbManager();
-        this.#newNoteHandler = this.#newNote.bind(this);
-        this.#newNoteButton = document.getElementById('new-note');
-        this.#newNoteButton.addEventListener('click', this.#newNoteHandler);
+        await this.#initNewNote();
+        await this.#initNotesList();
     }
 
     async #initDbManager() {
@@ -39,9 +45,26 @@ export default class ApplicationRunner {
         window.dispatchEvent(new CustomEvent('dbAction', {detail: {action:  "initDb"}}));
     }
 
+    async #initNewNote() {
+        this.#newNoteButton = document.getElementById('new-note');
+        this.#newNoteButton.addEventListener('click', this.#newNoteHandler);
+    }
+
+    async #initNotesList() {
+        this.#notesList = document.getElementById('notes-list');
+        this.#notesList.addEventListener('ready', this.#notesListReadyHandler);
+        await import ("./components/notes-list/notes-list.js");
+    }
+
+    async #notesListReady() {
+        console.log("notes list ready");
+        //fetch the notes from indexDB and pass that to the notes-list component
+        window.dispatchEvent(new CustomEvent('dbAction', {detail: {action:  "getAll"}}));
+    }
+
     async #newNote(event) {
         //first check if the noteEditor is already there in create state
-        const noteEditor = document.querySelector('note-editor[state="create"]');
+        const noteEditor = document.querySelector('note-editor[data-state="create"]');
         if (noteEditor) {
             return;
         }
@@ -49,7 +72,7 @@ export default class ApplicationRunner {
         //launches the note-editor component in create state
         await import ("./components/note-editor/note-editor.js").then(() => {
             const noteEditor = document.createElement('note-editor');
-            noteEditor.setAttribute('state', 'create');
+            noteEditor.setAttribute('data-state', 'create');
             this.#newNoteButton.after(noteEditor);
         });
     }

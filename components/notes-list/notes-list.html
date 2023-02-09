@@ -1,2 +1,34 @@
+<style>
+    :host {
+        width: 75%;
+        height: fit-content;
+    }
+    :host ul {
+        list-style: none;
+        padding: 0;
+    }
+    :host li {
+        height: 1.4rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: var(--border);
+        padding: var(--padding);
+        margin: var(--margin) 0;
+    }
+    :host li:not(:hover) button {
+        display: none;
+    }
+</style>
 <ul>
+    <li id="note-id1" data-action="edit">Note Title<button data-action="delete">Delete</button></li>
+    <li id="note-id1" data-action="edit">Note Title<button data-action="delete">Delete</button></li>
+    <li id="note-id1" data-action="edit">Note Title<button data-action="delete">Delete</button></li>
+    <li id="note-id1" data-action="edit">Note Title<button data-action="delete">Delete</button></li>
 </ul>
+<template id="list-item">
+    <li id="note-id" data-action="edit">Note Title<button data-action="delete">Delete</button></li>
+</template>
+<template id="notes-editor">
+    <note-editor data-state="edit"></note-editor>
+</template>
