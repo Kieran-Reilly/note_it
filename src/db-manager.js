@@ -7,17 +7,9 @@ export class DbManager {
     #dbVersion = 1;
     #dbStore = 'notes';
 
-    #messageToHandler = Object.freeze({
-        'save': '#save',
-        'delete': '#delete',
-        'get': '#get',
-        'put': '#put'
-    })
-
     #dbActionHandler;
 
     constructor() {
-        // this.#sendMessage({action: "initDb", name: this.#dbName, version: this.#dbVersion, store: this.#dbStore});
         this.#messageHandler = this.#receiveMessage.bind(this)
         this.#dbActionHandler = this.#processDbAction.bind(this);
         window.addEventListener("dbAction", this.#dbActionHandler);
@@ -47,9 +39,6 @@ export class DbManager {
     }
 
     async #receiveMessage(event) {
-        //TODO KR: need convention here to process worker results
-        console.log("message received", event);
+        window.dispatchEvent(new CustomEvent('dbActionComplete', {detail: {action: event.data.operation, result: event.data.result, messageData: event.data.messageData}}));
     }
-
-
 }

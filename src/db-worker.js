@@ -33,10 +33,12 @@ class DbWorker {
      * @param callback
      * @returns {Promise<unknown>}
      */
-    async #transact(callback) {
+    async #transact(params, callback) {
+        const store = params.store;
+
         return new Promise(async (resolve, reject) => {
-            const transaction = this.#db.transaction(["notes"], "readwrite");
-            const objectStore = transaction.objectStore("notes");
+            const transaction = this.#db.transaction([store], "readwrite");
+            const objectStore = transaction.objectStore(store);
 
             const request = await callback(objectStore);
 
@@ -55,7 +57,7 @@ class DbWorker {
      * @returns {Promise<void>}
      */
     async add(params) {
-        return await this.#transact(async (objectStore) => {
+        return await this.#transact(params, async (objectStore) => {
             return await objectStore.add({id: params.id, title: params.title, note: params.note});
         });
     }
@@ -66,7 +68,9 @@ class DbWorker {
      * @returns {Promise<void>}
      */
     async delete(params) {
-
+        return await this.#transact(params, async (objectStore) => {
+            return await objectStore.delete(Number.isInteger(params.id) ? params.id : parseInt(params.id));
+        });
     }
 
     /**
@@ -75,28 +79,38 @@ class DbWorker {
      * @returns {Promise<void>}
      */
     async get(params) {
-        return await this.#transact(async (objectStore) => {
-            return await objectStore.get(params.id);
+        return await this.#transact(params, async (objectStore) => {
+            return await objectStore.get(Number.isInteger(params.id) ? params.id : parseInt(params.id));
         });
     }
 
     /**
      * Fetch all operation on the indexedDB
      * @param params
-     * @returns {Promise<void>}
      */
     async getAll(params) {
+        const store = params.store;
         const notes = [];
-        const transactionResult = await this.#transact(async (objectStore) => {
-            return objectStore.openCursor();
-        });
-        console.log("transactionResult", transactionResult);
 
-        const cursor = transactionResult.target.result;
-        if (cursor) {
-            notes.push(cursor.value);
-            cursor.continue();
-        }
+        return new Promise(async (resolve, reject) => {
+            const transaction = this.#db.transaction([store], "readwrite");
+            const objectStore = transaction.objectStore(store);
+            const request = objectStore.openCursor();
+
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    notes.push(cursor.value);
+                    cursor.continue();
+                } else {
+                    resolve({target: {result: notes}});
+                }
+            }
+            request.onerror = (event) => {
+                console.error("Error retrieving notes", event);
+                reject(event);
+            }
+        })
     }
 
     /**
@@ -105,7 +119,9 @@ class DbWorker {
      * @returns {Promise<void>}
      */
     async put(params) {
-
+        return await this.#transact(params, async (objectStore) => {
+            return await objectStore.put({id: params.id, title: params.title, note: params.note});
+        });
     }
 
     async onMessage(message) {
@@ -114,7 +130,7 @@ class DbWorker {
         if (message.data.action != null && this[message.data.action] != null) {
             const transactionResult = await this[message.data.action](message.data);
             this.#db = null;
-            postMessage({operation: message.data.action, result: transactionResult.target.result});
+            postMessage({operation: message.data.action, result: transactionResult.target.result, messageData: message.data});
         }
     }
 }

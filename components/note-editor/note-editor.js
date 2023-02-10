@@ -13,6 +13,35 @@ class NoteEditor extends HTMLElement {
         "delete": this.#delete.bind(this)
     });
 
+    #title;
+    #note;
+
+    get id() {
+        return this.#id;
+    }
+
+    set id(newValue) {
+        this.#id = newValue;
+    }
+
+    get title() {
+        return this.#title;
+    }
+
+    set title(newValue) {
+        this.#title = newValue;
+        if (this.#titleInput) this.#titleInput.value = newValue;
+    }
+
+    get note() {
+        return this.#note;
+    }
+
+    set note(newValue) {
+        this.#note = newValue;
+        if (this.#noteInput) this.#noteInput.value = newValue;
+    }
+
     get html() {
         return import.meta.url.replace(".js", ".html");
     }
@@ -34,6 +63,8 @@ class NoteEditor extends HTMLElement {
         this.#id = null;
         this.#titleInput = null;
         this.#noteInput = null;
+        this.#title = null;
+        this.#note = null;
     }
 
     async #load() {
@@ -41,6 +72,8 @@ class NoteEditor extends HTMLElement {
             requestAnimationFrame( async () => {
                 this.#titleInput = this.shadowRoot.getElementById("title");
                 this.#noteInput = this.shadowRoot.getElementById("note");
+                if (this.#title) this.#titleInput.value = this.#title;
+                if (this.#note) this.#noteInput.value = this.#note;
                 this.shadowRoot.addEventListener("click", this.#clickHandler);
                 resolve();
             })
@@ -65,18 +98,19 @@ class NoteEditor extends HTMLElement {
             title = "Untitled Note";
         }
 
-        //Might need to switch out logic here. If this.#id is defined, call update, otherwise call add;
-        const id = this.#id || Date.now();
-        window.dispatchEvent(new CustomEvent("dbAction", {detail: {action: "add", params: {id: id, title, note}}}));
+        if (this.#id != null) {
+            window.dispatchEvent(new CustomEvent("dbAction", {detail: {action: "put", params: {id: this.#id, title, note}}}));
+        } else {
+            window.dispatchEvent(new CustomEvent("dbAction", {detail: {action: "add", params: {id: Date.now(), title, note}}}));
+            this.remove();
+        }
     }
 
     async #close(event) {
-        console.log("NoteEditor close");
         this.remove();
     }
 
     async #delete(event) {
-        console.log("NoteEditor delete");
         window.dispatchEvent(new CustomEvent("dbAction", {detail: {action: "delete", params: {id: this.#id}}}));
         this.remove();
     }

@@ -21,14 +21,10 @@
     }
 </style>
 <ul>
-    <li id="note-id1" data-action="edit">Note Title<button data-action="delete">Delete</button></li>
-    <li id="note-id1" data-action="edit">Note Title<button data-action="delete">Delete</button></li>
-    <li id="note-id1" data-action="edit">Note Title<button data-action="delete">Delete</button></li>
-    <li id="note-id1" data-action="edit">Note Title<button data-action="delete">Delete</button></li>
 </ul>
-<template id="list-item">
-    <li id="note-id" data-action="edit">Note Title<button data-action="delete">Delete</button></li>
+<template id="list-item-template">
+    <li id="note-id" data-action="edit"><h3>Note Title</h3><button data-action="delete">Delete</button></li>
 </template>
-<template id="notes-editor">
+<template id="notes-editor-template">
     <note-editor data-state="edit"></note-editor>
 </template>

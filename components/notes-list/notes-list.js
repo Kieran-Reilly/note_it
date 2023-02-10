@@ -1,3 +1,5 @@
+import "../note-editor/note-editor.js";
+
 /**
  * @class NotesList - Maintains a list of notes taken within an unordered list
  *
@@ -11,6 +13,9 @@
 class NotesList extends HTMLElement {
     #clickHandler = this.#click.bind(this);
     #data;
+    #list;
+    #listItemTemplate;
+    #notesEditorTemplate;
 
     #actions = Object.freeze({
         "edit": this.#edit.bind(this),
@@ -55,12 +60,19 @@ class NotesList extends HTMLElement {
         this.shadowRoot.removeEventListener("click", this.#clickHandler);
         this.#clickHandler = null
         this.#data = null;
+        this.#list = null;
+        this.#listItemTemplate = null;
+        this.#notesEditorTemplate = null;
     }
 
     async #load() {
         return new Promise(resolve => {
             requestAnimationFrame( async () => {
                 this.shadowRoot.addEventListener("click", this.#clickHandler);
+                this.#list = this.shadowRoot.querySelector("ul");
+                this.#listItemTemplate = this.shadowRoot.getElementById("list-item-template");
+                this.#notesEditorTemplate = this.shadowRoot.getElementById("notes-editor-template");
+
                 if (this.data != null) {
                     await this.#render();
                 }
@@ -81,7 +93,8 @@ class NotesList extends HTMLElement {
      * @returns {Promise<void>}
      */
     async #edit(event) {
-        console.log("edit");
+        const id = event.target.id;
+        window.dispatchEvent(new CustomEvent("dbAction", {detail: {action: "get", params: {id: id}}}));
     }
 
     /**
@@ -90,11 +103,47 @@ class NotesList extends HTMLElement {
      * @returns {Promise<void>}
      */
     async #delete(event) {
-        console.log("delete");
+        const id = event.target.parentElement.id;
+        window.dispatchEvent(new CustomEvent("dbAction", {detail: {action: "delete", params: {id: id}}}));
     }
 
     async #render() {
+        this.#list.innerHTML = "";
 
+        for (const item of this.data) {
+            await this.addItem(item.id, item.title);
+        }
+    }
+
+    async addItem(id, title) {
+        const listItem = this.#listItemTemplate.content.cloneNode(true);
+        const li = listItem.querySelector("li");
+        li.setAttribute('id', id);
+        li.firstElementChild.innerText = title;
+        this.#list.appendChild(listItem);
+    }
+
+    async removeItem(id) {
+        const itemToRemove = this.#list.querySelector(`[id='${id}']`);
+        if (itemToRemove) {
+            this.#list.removeChild(itemToRemove);
+        }
+    }
+
+    async editItem(id, title, note) {
+        //clone the note-editor template
+        //set the id, title, and note properties
+        //replace the note-list item with the note-editor
+        const noteEditorFrag = this.#notesEditorTemplate.content.cloneNode(true);
+        const noteEditor = noteEditorFrag.firstElementChild
+
+        const itemToReplace = this.#list.querySelector(`[id='${id}']`);
+        if (itemToReplace) {
+            this.#list.replaceChild(noteEditorFrag, itemToReplace);
+            noteEditor.title = title;
+            noteEditor.note = note;
+            noteEditor.id = id;
+        }
     }
 }
 
